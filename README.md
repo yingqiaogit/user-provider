@@ -13,6 +13,8 @@ It is a backend that supports the [UI dashboard](https://github.com/yingqiaogit/
 - `mvn spring-boot:run`
 
 ### Pull users
+Send a request to pull users through Postman: 
+
 ![GET Users](readme/users.png)
 
 
