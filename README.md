@@ -1,7 +1,7 @@
 # User Provider
 
 ## Java/Spring boot backend
-It is a backend that supports UI dashboard: `https://github.com/yingqiaogit/user-dashboard`
+It is a backend that supports [UI dashboard](https://github.com/yingqiaogit/user-dashboard)
 
 ### API
 - `http://localhost:8080/api/v1/users?role=<role>` with role as one of `admin`,  `user`, `viewer`, `all`
