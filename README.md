@@ -12,5 +12,8 @@ It is a backend that supports [UI dashboard](https://github.com/yingqiaogit/user
 - `mvn install`
 - `mvn spring-boot:run`
 
+### Users
+![GET Users](readme/users.png)
+
 
 
