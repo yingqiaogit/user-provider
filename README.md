@@ -11,9 +11,13 @@ It is a backend that supports the [UI dashboard](https://github.com/yingqiaogit/
 - `mvn install`
 - `mvn spring-boot:run`
 
+### Role Assertion
+Assert a role and receive a JWT token:
+![Assert Role](readme/role-assertion.png) 
+
 ### Pull users
 Send a request to pull users through Postman: 
 
-![GET Users](readme/users.png)
+![GET Users](readme/user-stream.png)
 
 
