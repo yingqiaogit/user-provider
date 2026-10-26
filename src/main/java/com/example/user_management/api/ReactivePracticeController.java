@@ -1,29 +1,31 @@
 package com.example.user_management.api;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.example.user_management.data.Role;
+import com.example.user_management.data.User;
+import com.example.user_management.utils.JwtUtil;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/v1")
-public class ReactivePracticeController {
-    private static final User[] USERS = {
-            new User(0, "John Doe", "user", "john.doe@example.com", LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)),
-            new User(1, "Jane Smith", "admin", "jane.smith@example.com", LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)),
-            new User(2, "Alice Johnson", "user", "alice.johnson@example.com", LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)),
-            new User(3, "Bob Brown", "viewer", "bob.brown@example.com", LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-        };
+public class ReactivePracticeController {    
 
     // 1. Single Item (Mono)
     @GetMapping("/one")
@@ -41,20 +43,75 @@ public class ReactivePracticeController {
                    .doOnCancel(() -> System.out.println("Stream cancelled by UI")); // Delays each item by 1 second
     }
 
+    @PostMapping(value = "/assertion")
+    public Mono<Map<String, String>> postAssertion(@RequestBody(required = true) Map<String, String> request) {
+        
+        var role = request.get("role");
+        if (role == null ) {
+            return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+        }
+
+        try {
+            Role.fromString(role);
+        } catch (IllegalArgumentException e) {
+            return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid role provided."));
+        }
+        
+        var token = JwtUtil.generateToken(role);
+
+        return Mono.just(Map.of(
+                "token", token
+        ));
+    }
+
     @GetMapping(value = "/users", produces = "text/event-stream")
-    public Flux<User> getStreamOfUsers(@RequestParam(required = false) String role) {
+    public Flux<Map<String, String>> getStreamOfUsers(
+        @RequestHeader(value = "Authorization", required = true) String authorization,
+        @RequestParam(required = true) String role) {
+
+        if (!authorization.startsWith("Bearer ")) {
+            return Flux.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization header must start with 'Bearer '"));
+        }    
+        
+        var token = authorization.substring(7); // Remove "Bearer " prefix
+
+        try {
+            var decodedRoleClaim = JwtUtil.decodeRole(token);
+            if (decodedRoleClaim.isNull()) {
+                return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token provided."));
+            }
+            var decodedRole = decodedRoleClaim.asString();
+            if (!"all".equals(role)) {
+                var roleEnum = Role.fromString(role);
+                if (!User.allowedFilter(decodedRole, roleEnum)) {
+                    return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Role not allowed to access this resource."));
+                }
+            }
+
+        } catch (Exception e) {
+            return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token provided."));
+        }                
         
         // flus just from a list of users filtered by role, if provided. If role is null or "all", return all users.
+        final Set<Role> allowedRoles;
+        if ("all".equals(role)) {
+            allowedRoles = Set.of(Role.MANAGER, Role.ADMIN, Role.USER);
+        } else {
+            try {
+                var roleEnum = Role.fromString(role);
+                allowedRoles = Set.of(roleEnum);
+            } catch (IllegalArgumentException e) {
+                return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role provided."));
+            }
+        }
 
         return Flux.fromStream(
             // Sample users
-            Arrays.stream(USERS).filter(user -> role == null || user.role().equals(role) || role.equals("all")) 
+            Arrays.stream(User.USERS).filter(user -> allowedRoles.contains(user.role())).map(User::toMap)
         )
           .delayElements(Duration.ofSeconds(1))
           .doOnCancel(() -> System.out.println("Stream cancelled by UI")); // Delays each item by 1 second
     }
 
-    private record User(int id, String name, String role, String email, LocalDateTime lastLoginTime) {
-        // This is a simple record class to represent a user    
-    }
+
 }
