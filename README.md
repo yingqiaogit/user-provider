@@ -1,7 +1,7 @@
 # User Provider
 
-## Java/Spring boot backend
-It is a backend that supports [UI dashboard](https://github.com/yingqiaogit/user-dashboard)
+## Java/Spring Boot backend
+It is a backend that supports the [UI dashboard](https://github.com/yingqiaogit/user-dashboard)
 
 ### API
 - `GET http://localhost:8080/api/v1/users?role=<role>` returns an event stream of users. Supported roles are `manager`, `admin`, `user`, and `all`.
@@ -11,7 +11,9 @@ It is a backend that supports [UI dashboard](https://github.com/yingqiaogit/user
 - `mvn install`
 - `mvn spring-boot:run`
 
-### Users
+### Pull users
+Send a request to pull users through Postman: 
+
 ![GET Users](readme/users.png)
 
 
