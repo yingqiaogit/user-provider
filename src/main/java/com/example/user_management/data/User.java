@@ -3,6 +3,7 @@ package com.example.user_management.data;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.Set;
 
 public record User(int id, String name, Role role, String email, LocalDateTime lastLoginTime) {
         // This is a simple record class to represent a user    
@@ -23,6 +24,13 @@ public record User(int id, String name, Role role, String email, LocalDateTime l
         }        
         return Role.ROLE_ALLOWED_FILTER.get(role).contains(filterRole);
     }    
+
+    public static Set<Role> getAllowedRoles(String role) {
+        if (role == null) {
+            return Set.of();
+        }
+        return Role.ROLE_ALLOWED_FILTER.get(role);
+    }
 
     public static Map<String, String> toMap(User user) {
         return Map.of(

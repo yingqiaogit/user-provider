@@ -51,35 +51,28 @@ public class UserController {
         }    
         
         var token = authorization.substring(7); // Remove "Bearer " prefix
-
+        String decodedRole;
         try {
             var decodedRoleClaim = JwtUtil.decodeRole(token);
             if (decodedRoleClaim.isNull()) {
                 return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token provided."));
             }
-            var decodedRole = decodedRoleClaim.asString();
-            if (!"all".equals(role)) {
-                var roleEnum = Role.fromString(role);
-                if (!User.allowedFilter(decodedRole, roleEnum)) {
-                    return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Role not allowed to access this resource."));
-                }
+            decodedRole = decodedRoleClaim.asString();
+            var roleEnum = Role.fromString(role);
+            if (!User.allowedFilter(decodedRole, roleEnum)) {
+                return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Role not allowed to access this resource."));
             }
-
         } catch (Exception e) {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token provided."));
         }                
         
         // flus just from a list of users filtered by role, if provided. If role is null or "all", return all users.
         final Set<Role> allowedRoles;
-        if ("all".equals(role)) {
-            allowedRoles = Set.of(Role.MANAGER, Role.ADMIN, Role.USER);
-        } else {
-            try {
-                var roleEnum = Role.fromString(role);
-                allowedRoles = Set.of(roleEnum);
-            } catch (IllegalArgumentException e) {
-                return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role provided."));
-            }
+        try {
+            var roleEnum = Role.fromString(role);
+            allowedRoles = Set.of(roleEnum);
+        } catch (IllegalArgumentException e) {
+            return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role provided."));
         }
 
         return Flux.fromStream(

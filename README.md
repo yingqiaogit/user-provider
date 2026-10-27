@@ -15,7 +15,7 @@ Assert a role and receive a JWT token:
 
 #### Pull Users
 Stream out users with 1 second in between:
-- `GET http://localhost:8080/api/v1/users?role=<role>` returns an event stream of users. Supported roles are `manager`, `admin`, `user`, and `all`.
+- `GET http://localhost:8080/api/v1/users?role=<role>` returns an event stream of users. Supported roles are `manager`, `admin`, `user`.
 
 ![GET Users](readme/user-stream.png)
 
