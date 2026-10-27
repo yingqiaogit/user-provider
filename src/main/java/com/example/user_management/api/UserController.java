@@ -24,8 +24,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/v1")
-public class ReactivePracticeController {    
+@RequestMapping("/api/v1/users")
+public class UserController {    
 
     // 1. Single Item (Mono)
     @GetMapping("/one")
@@ -42,29 +42,8 @@ public class ReactivePracticeController {
                    .delayElements(Duration.ofSeconds(1))
                    .doOnCancel(() -> System.out.println("Stream cancelled by UI")); // Delays each item by 1 second
     }
-
-    @PostMapping(value = "/assertion")
-    public Mono<Map<String, String>> postAssertion(@RequestBody(required = true) Map<String, String> request) {
-        
-        var role = request.get("role");
-        if (role == null ) {
-            return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
-        }
-
-        try {
-            Role.fromString(role);
-        } catch (IllegalArgumentException e) {
-            return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid role provided."));
-        }
-        
-        var token = JwtUtil.generateToken(role);
-
-        return Mono.just(Map.of(
-                "token", token
-        ));
-    }
-
-    @GetMapping(value = "/users", produces = "text/event-stream")
+    
+    @GetMapping(produces = "text/event-stream")
     public Flux<Map<String, String>> getStreamOfUsers(
         @RequestHeader(value = "Authorization", required = true) String authorization,
         @RequestParam(required = true) String role) {
@@ -112,6 +91,4 @@ public class ReactivePracticeController {
           .delayElements(Duration.ofSeconds(1))
           .doOnCancel(() -> System.out.println("Stream cancelled by UI")); // Delays each item by 1 second
     }
-
-
 }
